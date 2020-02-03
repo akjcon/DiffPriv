@@ -159,8 +159,9 @@ With this function in place, it is trivial to query our database and build a new
 #### Testing/comparing the two databases
 To test that the functions were working properly, we queried the integer column from our original database and created histograms from both the differential data and the original data. These histograms were both of a roughly normal distribution, showing us that the process by which we make our data satisfy differential privacy is not changing the characteristics of the data, just retaining its privacy. Below is the histogram created for the two datasets:
 ![alt text](https://github.com/akjcon/DiffPriv/blob/master/Figure_1.png "Histogram Comparison")
+
 A note: inherent with Bloom filters is a small level of error, this is why there seems to be much longer tails in the differential data histogram. With smoothing and error correction we can achieve much more similarity in the future.
 
 #### Acknowledgements
 I'd like to thank Professor Dan Barowy at Williams College for agreeing to sponsor this project. Without his help and encouragement I likely would never have learned so much about this wildly interesting area of data privacy.
-I'd also like to thank Google for creating a framework back in 2014 for me to base my efforts on. This helped my understanding a tremendous amount when building the Bloom filter section. You can see their full codebase and their paper on it [here](https://github.com/google/rappor). 
+I'd also like to thank Google for creating a framework back in 2014 for me to base my efforts on. This helped my understanding a tremendous amount when building the Bloom filter section. You can see their full codebase and their paper on it [here](https://github.com/google/rappor).
