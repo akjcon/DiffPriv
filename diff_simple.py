@@ -30,5 +30,3 @@ def db_creator():
     '''
     db_real = []
     db_priv = []
-
-    
