@@ -110,6 +110,51 @@ def query_db(database,column,hash_num):
 In this function, we first need to determine which type of data we are looking at, and this is where our ColumnType class comes in handy since it specifies the type.
 ##### If it's a Boolean:
 If the data is a simple boolean type, we don't need to do anything complicated. All we must do is flip a coin, and if the coin is heads we return the real data. However, if the coin is tails, we flip the coin again and return the result of that coin flip. Since any observer of the new data does not know the result of the first coin flip, they cannot ever be sure if the data point they are viewing is randomly generated or real. However, since the generated data is in fact random, it does not skew the descriptive statistics of the database.
-## If it's an Int or String
+##### If it's an Int or String
 One of the nice properties of integers is that they can be very easily represented as strings by adding a ''. It is for this reason that we treat them similarly in this example. Unfortunately they are a bit trickier to deal with than simple booleans. To get data that satisfies differential privacy here, we must use a Bloom filter. A Bloom filter is a simple data structure, represented here as a bit vector, that will tell you with high confidence if it contains a certain value and with reasonable confidence if it does not contain a value.
-To learn more about them, go [here](https://llimllib.github.io/bloomfilter-tutorial/)
+To learn more about Bloom filters, go [here](https://llimllib.github.io/bloomfilter-tutorial/). However, for our case a Bloom filter is not enough. We must randomize each bit in the Bloom filter such that each bit has a p=.25 of being a 1, p=.25 of being a 0, and p=.5 of being a real value. Here is the function where this happens:
+
+```python
+def get_bloom_bits(datum,hash_num):
+    #returns bloom filter w correct bits set
+    md5 = hashlib.md5(str(datum).encode('utf-8'))
+    hash = md5.digest()
+    bloom_bits = [hash[i] for i in range(hash_num)] #gets bits to flip in bitarray
+
+    b = bitarray(2**8) #initializing blank 256 bit bloom filter
+    b.setall(0) #zeroing
+    for num in bloom_bits:
+        b[num] = True
+    return b
+
+def to_bloom_filter(datum,hash_num):
+    '''
+    takes one data point (eg 'banana') and hashes it to a bloom filter B.
+    then, we take this bloom filter (a bit array), and iterate through it
+    and let each bit have .25 chance of being a 1 or a 0, and a .5 chance
+    of being the original value from B. We then report this new bloom filter
+    B' and insert it into a new database
+    datum: value to be hashed
+    hash_num: number of hashes to perform, must be 16 or less due to md5
+    '''
+    b = get_bloom_bits(datum,hash_num)
+
+    b_mask = bin(random.randint(0, 2**256 - 1)) #random bloom filter
+    b_mask_str = str(b_mask[2:]).zfill(256) #padding with zeroes
+    b_mask = bitarray([int(i) for i in b_mask_str]) #converting to bitarray obj
+
+    for index,bit in enumerate(b):
+        c = random.randint(0,1)
+        if c == 0:
+            b[index] = b_mask[index]
+        else: pass
+
+    #bitarray is randomized, differentially private now
+    return b
+```
+In get_bloom_bits(datum,hash_num), we hash the value a selected number of times, and use each hash to get an index at which to set bits in a blank Bloom filter to 1. This now gives us a Bloom filter bit array b containing our value. In to_bloom_filter(datum,hash_num), we generate an integer that has equal probability of each bit to be 1 or 0, and we then convert that to a bit array b_mask. With these two bit arrays, we then iterate through b, changing each bit based on the probability scheme we discussed above. Finally, we have our differentially private Bloom filter, and we can return this.
+
+With this function in place, it is trivial to query our database and build a new, differentially private database comprised of Booleans and bit array Bloom filters.
+
+#### Testing/comparing the two databases
+To test that the functions were working properly, we queried the integer column from our original database and created histograms from both the differential data and the original data. These histograms were both of a roughly normal distribution, showing us that the process by which we make our data satisfy differential privacy is not changing the characteristics of the data, just retaining its privacy. Below is the histogram created for the two datasets:
