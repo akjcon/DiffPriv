@@ -3,7 +3,6 @@
 ### Introduction
 
 Differential Privacy is is a concept that, when applied correctly, can allow user data to be analyzed and computed upon without compromising any privacy. This is especially important with sensitive data such as medical records or income statements, which can be valuable data to researchers, but requires strict privacy guarantees before it can be used.
-[expand this]
 
 ##### A simple example:
 
